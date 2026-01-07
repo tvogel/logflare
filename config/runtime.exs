@@ -170,9 +170,9 @@ config :logflare,
          password: System.get_env("DB_PASSWORD"),
          username: System.get_env("DB_USERNAME"),
          socket_options:
-           case Utils.ip_version(System.get_env("DB_HOSTNAME", "")) do
-             nil -> []
-             version -> [version]
+           case detect_ip_version.(System.get_env("DB_HOSTNAME", "")) do
+             {:ok, version} -> [version]
+             {:error, reason} -> raise "Failed to detect IP version for DB_HOSTNAME: #{reason}"
            end,
          after_connect:
            if(System.get_env("DB_SCHEMA"),
@@ -304,9 +304,9 @@ socket_options_for_url = fn
   url when is_binary(url) ->
     case URI.parse(url) do
       %URI{host: host} ->
-        case Utils.ip_version(host) do
-          nil -> []
-          version -> [version]
+        case detect_ip_version.(host) do
+          {:ok, version} -> [version]
+          {:error, reason} -> raise "Failed to detect IP version for URL host: #{host}, reason: #{reason}"
         end
 
       _ ->
